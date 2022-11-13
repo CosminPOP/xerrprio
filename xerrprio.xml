@@ -97,6 +97,39 @@
                         </Anchor>
                     </Anchors>
                 </Texture>
+                <Texture name="$parentDown1" file="Interface\AddOns\xerrprio\up" hidden="true">
+                    <Size x="14" y="14"/>
+                    <TexCoords left="0" right="1" top="1" bottom="0"/>
+                    <Anchors>
+                        <Anchor point="LEFT">
+                            <Offset>
+                                <AbsDimension x="8" y="5"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </Texture>
+                <Texture name="$parentDown2" file="Interface\AddOns\xerrprio\up" hidden="true">
+                    <Size x="14" y="14"/>
+                    <TexCoords left="0" right="1" top="1" bottom="0"/>
+                    <Anchors>
+                        <Anchor point="LEFT">
+                            <Offset>
+                                <AbsDimension x="8" y="1"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </Texture>
+                <Texture name="$parentDown3" file="Interface\AddOns\xerrprio\up" hidden="true">
+                    <Size x="14" y="14"/>
+                    <TexCoords left="0" right="1" top="1" bottom="0"/>
+                    <Anchors>
+                        <Anchor point="LEFT">
+                            <Offset>
+                                <AbsDimension x="8" y="-3"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </Texture>
                 <Texture name="$parentUP1" file="Interface\AddOns\xerrprio\up">
                     <Size x="20" y="20"/>
                     <Anchors>

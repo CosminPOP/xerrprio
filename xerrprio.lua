@@ -363,9 +363,9 @@ XerrPrio.Worker:SetScript("OnUpdate", function(self, elapsed)
 
                         _G[frame .. 'RefreshBar']:SetVertexColor(1, 1, 1, 0.2)
 
-                        if current_dps >= stats.dps * (1 + XerrPrioDB.minDotDpsIncrease / 100) then
-                            local refreshPower = floor(100 * current_dps / stats.dps - 100)
+                        local refreshPower = floor(100 * current_dps / stats.dps - 100)
 
+                        if current_dps >= stats.dps * (1 + XerrPrioDB.minDotDpsIncrease / 100) then
                             _G[frame .. 'UP1']:Show()
                             if refreshPower >= 10 and refreshPower < 20 then
                                 _G[frame .. 'UP1']:Show()
@@ -400,6 +400,23 @@ XerrPrio.Worker:SetScript("OnUpdate", function(self, elapsed)
                             _G[frame .. 'UP1']:Hide()
                             _G[frame .. 'UP2']:Hide()
                             _G[frame .. 'UP3']:Hide()
+                        end
+
+                        _G[frame .. 'Down1']:Hide()
+                        _G[frame .. 'Down2']:Hide()
+                        _G[frame .. 'Down3']:Hide()
+
+                        if current_dps < stats.dps then
+                            if refreshPower < 0 and refreshPower > -10 then
+                                _G[frame .. 'Down1']:Show()
+                            elseif refreshPower <= -10 and refreshPower > -20 then
+                                _G[frame .. 'Down1']:Show()
+                                _G[frame .. 'Down2']:Show()
+                            elseif refreshPower <= -20 then
+                                _G[frame .. 'Down1']:Show()
+                                _G[frame .. 'Down2']:Show()
+                                _G[frame .. 'Down3']:Show()
+                            end
                         end
 
                         -- refresh before last tick
