@@ -354,7 +354,7 @@ XerrPrio.Worker:SetScript("OnUpdate", function(self, elapsed)
 
                         local stats = XerrPrio.dotStats[guid][key]
 
-                        local tof, uvls = XerrPrio:PlayerHasProc(XerrPrio.buffs.spells.tof.id), XerrPrio:PlayerHasProc(XerrPrio.buffs.spells.uvls.id)
+                        local uvls = XerrPrio:PlayerHasProc(XerrPrio.buffs.spells.uvls.id)
                         local current_dps = XerrPrio:GetSpellDamage(spell.id)
 
                         XerrPrio.lowestProcTime = XerrPrio:GetLowestProcTime()
@@ -425,6 +425,12 @@ XerrPrio.Worker:SetScript("OnUpdate", function(self, elapsed)
                             _G[frame .. 'RefreshBar']:SetWidth(XerrPrioDB.barWidth * (tl / duration))
                             _G[frame .. 'RefreshSpark']:Show()
                             _G[frame .. 'RefreshBar']:Show()
+                        end
+
+                        if stats.uvls then
+                            if GetTime() >= stats.uvlsExpirationTime then
+                                stats.uvls = false
+                            end
                         end
 
                         if uvls then
@@ -612,8 +618,8 @@ function XerrPrio:SpellCast(id, guid)
 
             if not self.dotStats[guid][key] then
                 self.dotStats[guid][key] = {
-                    tof = false,
                     uvls = false,
+                    uvlsTime = 0,
                     duration = 0,
                     interval = 0,
                     dps = 0
@@ -623,7 +629,9 @@ function XerrPrio:SpellCast(id, guid)
             self.dotStats[guid][key].tof = self:PlayerHasProc(self.buffs.spells.tof.id)
             self.dotStats[guid][key].uvls = self:PlayerHasProc(self.buffs.spells.uvls.id)
 
-            self.dotStats[guid][key].dps = self:GetSpellDamage(spell.id)
+            self.dotStats[guid][key].dps, _, self.dotStats[guid][key].duration = self:GetSpellDamage(spell.id)
+
+            self.dotStats[guid][key].uvlsExpirationTime = GetTime() + self.dotStats[guid][key].duration
 
             XerrPrio.Worker.dotScanner.spellId = id
             XerrPrio.Worker.dotScanner.enabled = true
