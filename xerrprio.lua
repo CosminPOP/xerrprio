@@ -861,7 +861,7 @@ function XerrPrio:GetNextSpell()
     end
 
     -- shadow word: death
-    if self:ExecutePhase() and self:GetSpellCooldown(self.icons.spells.swd.id) == 0 then
+    if self:SWDPhase() and self:GetSpellCooldown(self.icons.spells.swd.id) == 0 then
         if self:GetDebuffInfo(self.icons.spells.dp.id) >= 0.2 then
             if GetTime() - self.icons.spells.swd.lastCastTime >= 8 then
                 tinsert(prio, self.icons.spells.swd)
