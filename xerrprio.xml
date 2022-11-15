@@ -97,70 +97,7 @@
                         </Anchor>
                     </Anchors>
                 </Texture>
-                <Texture name="$parentDown1" file="Interface\AddOns\xerrprio\up" hidden="true">
-                    <Size x="14" y="14"/>
-                    <TexCoords left="0" right="1" top="1" bottom="0"/>
-                    <Anchors>
-                        <Anchor point="LEFT">
-                            <Offset>
-                                <AbsDimension x="7" y="-4"/>
-                            </Offset>
-                        </Anchor>
-                    </Anchors>
-                </Texture>
-                <Texture name="$parentDown2" file="Interface\AddOns\xerrprio\up" hidden="true">
-                    <Size x="14" y="14"/>
-                    <TexCoords left="0" right="1" top="1" bottom="0"/>
-                    <Anchors>
-                        <Anchor point="TOP" relativeTo="$parentDown1" relativePoint="TOP">
-                            <Offset>
-                                <AbsDimension x="0" y="5"/>
-                            </Offset>
-                        </Anchor>
-                    </Anchors>
-                </Texture>
-                <Texture name="$parentDown3" file="Interface\AddOns\xerrprio\up" hidden="true">
-                    <Size x="14" y="14"/>
-                    <TexCoords left="0" right="1" top="1" bottom="0"/>
-                    <Anchors>
-                        <Anchor point="TOP" relativeTo="$parentDown2" relativePoint="TOP">
-                            <Offset>
-                                <AbsDimension x="0" y="5"/>
-                            </Offset>
-                        </Anchor>
-                    </Anchors>
-                </Texture>
-                <Texture name="$parentUp1" file="Interface\AddOns\xerrprio\up">
-                    <Size x="14" y="14"/>
-                    <Anchors>
-                        <Anchor point="LEFT">
-                            <Offset>
-                                <AbsDimension x="7" y="-5"/>
-                            </Offset>
-                        </Anchor>
-                    </Anchors>
-                </Texture>
-                <Texture name="$parentUp2" file="Interface\AddOns\xerrprio\up">
-                    <Size x="14" y="14"/>
-                    <Anchors>
-                        <Anchor point="TOP" relativeTo="$parentUp1" relativePoint="TOP">
-                            <Offset>
-                                <AbsDimension x="0" y="5"/>
-                            </Offset>
-                        </Anchor>
-                    </Anchors>
-                </Texture>
-                <Texture name="$parentUp3" file="Interface\AddOns\xerrprio\up">
-                    <Size x="14" y="14"/>
-                    <Anchors>
-                        <Anchor point="TOP" relativeTo="$parentUp2" relativePoint="TOP">
-                            <Offset>
-                                <AbsDimension x="0" y="5"/>
-                            </Offset>
-                        </Anchor>
-                    </Anchors>
-                </Texture>
-                <Texture name="$parentUVLSIcon" file="">
+                <Texture name="$parentUVLSIcon">
                     <Size x="18" y="18"/>
                     <TexCoords left="0.1" right="0.9" top="0.1" bottom="0.9"/>
                     <Anchors>

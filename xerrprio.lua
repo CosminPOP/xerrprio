@@ -35,6 +35,9 @@ XerrPrio.hp_path_icon = 'Interface\\AddOns\\HaloPro\\HaloPro_Art\\Shadow_Icon\\'
 
 XerrPrio.lowestProcTime = 0
 XerrPrio.dotStats = {}
+XerrPrio.intervalFallback = 3.1415926
+XerrPrio.durationFallback = 18.1415926
+XerrPrio.vtGUID = 0
 
 XerrPrio.bars = {
     spells = {
@@ -108,6 +111,7 @@ XerrPrio.colors = {
 --------------------
 
 XerrPrio:RegisterEvent('UNIT_SPELLCAST_SUCCEEDED')
+XerrPrio:RegisterEvent('UNIT_SPELLCAST_START')
 XerrPrio:RegisterEvent('ADDON_LOADED')
 XerrPrio:RegisterEvent('PLAYER_ENTERING_WORLD')
 XerrPrio:RegisterEvent('PLAYER_TARGET_CHANGED')
@@ -126,9 +130,15 @@ XerrPrio:SetScript("OnEvent", function(self, event, arg1, _, _, _, arg5)
         if not self.init then
             return false
         end
+        if event == 'UNIT_SPELLCAST_START' and arg1 == 'player' and UnitGUID('target') then
+            if arg5 == self.icons.spells.vt.id then
+                self.vtGUID = UnitGUID('target')
+            end
+            return
+        end
         if event == 'UNIT_SPELLCAST_SUCCEEDED' and arg1 == 'player' and UnitGUID('target') then
             if arg5 == self.icons.spells.swd.id or arg5 == self.icons.spells.swp.id or arg5 == self.icons.spells.vt.id then
-                self:SpellCast(arg5, UnitGUID('target'))
+                self:SpellCast(arg5, arg5 == self.icons.spells.vt.id and self.vtGUID or UnitGUID('target'))
             end
             return
         end
@@ -324,12 +334,14 @@ XerrPrio.Worker:SetScript("OnUpdate", function(self, elapsed)
                     if spellId == XerrPrio.icons.spells.swp.id then
                         XerrPrio.dotStats[self.dotScanner.guid].swp.duration = duration
                         XerrPrio.dotStats[self.dotScanner.guid].swp.interval = tonumber(interval)
+                        XerrPrio.dotStats[self.dotScanner.guid].swp.uvlsExpirationTime = GetTime() + duration
                         self.dotScanner.enabled = false
                         break
                     end
                     if spellId == XerrPrio.icons.spells.vt.id then
                         XerrPrio.dotStats[self.dotScanner.guid].vt.duration = duration
                         XerrPrio.dotStats[self.dotScanner.guid].vt.interval = tonumber(interval)
+                        XerrPrio.dotStats[self.dotScanner.guid].vt.uvlsExpirationTime = GetTime() + duration
                         self.dotScanner.enabled = false
                         break
                     end
@@ -349,13 +361,20 @@ XerrPrio.Worker:SetScript("OnUpdate", function(self, elapsed)
                 if tl > 0 then
                     local guid = UnitGUID('target')
                     if XerrPrio.dotStats[guid] and XerrPrio.dotStats[guid][key] then
+                        local stats = XerrPrio.dotStats[guid][key]
+
+                        if stats.duration == XerrPrio.durationFallback or stats.interval == XerrPrio.intervalFallback then
+                            self.dotScanner.spellId = spell.id
+                            self.dotScanner.enabled = true
+                            self.dotScanner.guid = guid
+                            return
+                        end
 
                         self.show = true
 
                         _G[frame .. 'Bar']:SetWidth(XerrPrioDB.barWidth * perc)
                         _G[frame .. 'TextsTimeLeft']:SetText(floor(tl))
 
-                        local stats = XerrPrio.dotStats[guid][key]
 
                         local uvls = XerrPrio:PlayerHasProc(XerrPrio.buffs.spells.uvls.id)
                         local current_dps = XerrPrio:GetSpellDamage(spell.id)
@@ -624,17 +643,16 @@ function XerrPrio:SpellCast(id, guid)
             if not self.dotStats[guid][key] then
                 self.dotStats[guid][key] = {
                     uvls = false,
-                    uvlsTime = 0,
-                    duration = 0,
-                    interval = 0,
+                    uvlsExpirationTime = 0,
+                    duration = self.durationFallback,
+                    interval = self.intervalFallback,
                     dps = 0
                 }
             end
 
-            self.dotStats[guid][key].tof = self:PlayerHasProc(self.buffs.spells.tof.id)
             self.dotStats[guid][key].uvls = self:PlayerHasProc(self.buffs.spells.uvls.id)
 
-            self.dotStats[guid][key].dps, _, self.dotStats[guid][key].duration = self:GetSpellDamage(spell.id)
+            self.dotStats[guid][key].dps = self:GetSpellDamage(spell.id)
 
             self.dotStats[guid][key].uvlsExpirationTime = GetTime() + self.dotStats[guid][key].duration
 
