@@ -9,9 +9,11 @@ local _, class = UnitClass('player')
 xerrprio = LibStub("AceAddon-3.0"):NewAddon("xerrprio", "AceConsole-3.0", "AceEvent-3.0")
 local xerrprio = xerrprio
 
+---xprint
+---@param a string
 local function xprint(a)
     if not a then
-        print('|cff37d63e[xp] |rattempt to print a nil value.')
+        print('|cff37d63e[xp]|r attempt to print a nil value.')
         return
     end
     print('|cff37d63e[xp] |r' .. a)
@@ -112,7 +114,7 @@ XerrPrio:RegisterEvent('PLAYER_TARGET_CHANGED')
 XerrPrio:RegisterEvent('PLAYER_SPECIALIZATION_CHANGED')
 XerrPrio:RegisterEvent('PLAYER_TALENT_UPDATE')
 XerrPrio:RegisterEvent('VARIABLES_LOADED')
-XerrPrio:SetScript("OnEvent", function(self, event, arg1, arg2, arg3, arg4, arg5)
+XerrPrio:SetScript("OnEvent", function(self, event, arg1, _, _, _, arg5)
     if event then
         if (event == 'ADDON_LOADED' and arg1 == 'xerrprio') or event == 'PLAYER_ENTERING_WORLD' or event == 'PLAYER_TALENT_UPDATE' then
             self:Init()
@@ -158,6 +160,7 @@ end)
 ---  Init
 --------------------
 
+---Init
 function XerrPrio:Init()
 
     self.init = false
@@ -601,7 +604,9 @@ end)
 --- Helpers
 --------------------
 
--- get swp/vt dot stats on cast, and save last swd cast time
+---SpellCast - get swp/vt dot stats on cast, and save last swd cast time
+---@param id number
+---@param guid number
 function XerrPrio:SpellCast(id, guid)
 
     if id == self.icons.spells.swd.id then
@@ -642,13 +647,16 @@ function XerrPrio:SpellCast(id, guid)
     end
 end
 
--- get spell name, icon, and cast time
+---GetSpellInfo - get spell name, icon, and cast time
+---@param id number
+---@return table name, icon, castTime (ms)
 function XerrPrio:GetSpellInfo(id)
     local name, _, icon, _, _, _, castTime = GetSpellInfo(id)
     return name, icon, castTime / 1000
 end
 
--- get lowest temporary buff/proc duration
+---GetLowestProcTime - get lowest temporary buff/proc duration
+---@return number duration
 function XerrPrio:GetLowestProcTime()
 
     local lowestTime = 100
@@ -672,7 +680,9 @@ function XerrPrio:GetLowestProcTime()
     return 0
 end
 
--- get target debuff timeleft, and duration
+---GetDebuffInfo - get target debuff timeleft, and duration
+---@param id number
+---@return table timeLeft, interval, duration
 function XerrPrio:GetDebuffInfo(id)
     if not UnitExists('target') then
         return 0, 0, 0
@@ -687,7 +697,9 @@ function XerrPrio:GetDebuffInfo(id)
     return 0, 0, 0
 end
 
--- check if player has a proc/buff
+---PlayerHasProc - check if player has a proc/buff
+---@param procId number id of proc
+---@return boolean
 function XerrPrio:PlayerHasProc(procId)
     for i = 1, 40 do
         if select(11, UnitBuff('player', i)) == procId then
@@ -697,8 +709,9 @@ function XerrPrio:PlayerHasProc(procId)
     return false
 end
 
--- check if spell is next, next2, inrange, and get icon
--- helper for wa
+---GetWAIconColor - check if spell is next, next2, inRange, and get icon. Helper for wa
+---@param spell number id of spell
+---@return table r, g, b, a, next, next2, inRange, icon
 function XerrPrio:GetWAIconColor(spell)
 
     if not UnitExists('target') or self.paused then
@@ -747,7 +760,7 @@ function XerrPrio:GetWAIconColor(spell)
     return 1, 0.2, 0.2, 1, isNext, isNext2, inRange, icon
 end
 
--- get spellbook ids for all player spells
+---PopulateSpellBookID - get spellbook ids for all player spells
 function XerrPrio:PopulateSpellBookID()
     self.spellBookSpells = {}
 
@@ -768,13 +781,14 @@ function XerrPrio:PopulateSpellBookID()
     end
 end
 
--- get next spell for priority casting
+---GetNextSpell - get next spell for priority casting
+---@return table next and next2 spell to cast
 function XerrPrio:GetNextSpell()
 
     local prio = {}
 
     local guid = UnitGUID('target')
-    -- refresh dots if uvls procd
+    -- refresh dots if uvls proc
     if self:PlayerHasProc(self.buffs.spells.uvls.id) and self.dotStats[guid] then
         if self.dotStats[guid].vt and not self.dotStats[guid].vt.uvls then
             tinsert(prio, self.icons.spells.vt)
@@ -814,7 +828,7 @@ function XerrPrio:GetNextSpell()
         return prio
     end
 
-    -- halo when offcooldown and no dp
+    -- halo when off cooldown and no dp
     if self.icons.spells.halo.spellBookID and self:GetSpellCooldown(self.icons.spells.halo.id) == 0 then
         if self:GetDebuffInfo(self.icons.spells.dp.id) == 0 then
             tinsert(prio, self.icons.spells.halo)
@@ -932,7 +946,8 @@ function XerrPrio:GetNextSpell()
     return prio
 end
 
--- get time since last swd cast, to track icd
+---TimeSinceLastSWD - get time since last swd cast, to track icd
+---@return string time, formatted
 function XerrPrio:TimeSinceLastSWD()
     local t = GetTime() - self.icons.spells.swd.lastCastTime
     local icd = 8 - t
@@ -947,7 +962,9 @@ function XerrPrio:TimeSinceLastSWD()
     end
 end
 
--- get a spell's cooldown
+---GetSpellCooldown - get a spell's cooldown
+---@param id number id of spell
+---@return number cooldown (s)
 function XerrPrio:GetSpellCooldown(id)
     local start, duration, enabled = GetSpellCooldown(id);
     if enabled == 0 then
@@ -961,7 +978,8 @@ function XerrPrio:GetSpellCooldown(id)
     return 0
 end
 
--- get global cooldown
+---GetGCD - get global cooldown
+---@return number global cooldown (s)
 function XerrPrio:GetGCD()
     local start, duration = GetSpellCooldown(61304);
     if start > 0 and duration > 0 then
@@ -970,20 +988,26 @@ function XerrPrio:GetGCD()
     return 0
 end
 
--- get number of shadow orbs
+---GetShadowOrbs - get number of shadow orbs
+---@return number number of shadow orbs
 function XerrPrio:GetShadowOrbs()
     return UnitPower("player", SPELL_POWER_SHADOW_ORBS)
 end
 
--- check if target has 20% or less hp
-function XerrPrio:ExecutePhase()
+---SWDPhase - check if target has 20% or less hp
+---@return boolean swd phase
+function XerrPrio:SWDPhase()
     if not UnitExists('target') then
         return false
     end
     return UnitHealth('target') / UnitHealthMax('target') <= 0.2
 end
 
--- simple str replace
+---replace - simple str replace
+---@param text string text to search in
+---@param search string text to look for
+---@param replace string text to replace with
+---@return string text after replace
 function XerrPrio:replace(text, search, replace)
     if search == replace then
         return text
@@ -1000,7 +1024,9 @@ function XerrPrio:replace(text, search, replace)
     return searchedtext
 end
 
--- get swp/vt dps from tooltip
+---GetSpellDamage - get swp/vt dps from tooltip
+---@param id number
+---@return table dps, damage, duration
 function XerrPrio:GetSpellDamage(id)
 
     XerrPrioTooltipFrame:SetOwner(UIParent, "ANCHOR_NONE")
@@ -1028,11 +1054,11 @@ function XerrPrio:GetSpellDamage(id)
 end
 
 --------------------
---- Slashcommands
+--- Slash Commands
 --------------------
 
 SLASH_XERRPRIO1, SLASH_XERRPRIO2 = "/xerrprio", "/xprio";
-function SlashCmdList.XERRPRIO(arg)
+function SlashCmdList.XERRPRIO()
     InterfaceOptionsFrame_OpenToCategory('xerrprio')
 end
 
@@ -1040,6 +1066,8 @@ end
 --- Options
 --------------------
 
+---CreateOptions - create options for game's interface options
+---@return table options
 function XerrPrio:CreateOptions()
 
     return {
@@ -1663,6 +1691,7 @@ function XerrPrio:CreateOptions()
 
 end
 
+---UpdateConfig - update ui based on config vars
 function XerrPrio:UpdateConfig()
 
     self.paused = not XerrPrioDB.configMode
