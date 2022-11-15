@@ -6,6 +6,9 @@ local _, class = UnitClass('player')
 -- known issues
 -- if target is friendly and turns hostile, the pause doesnt go to false
 
+-- todo
+-- sound when dots have x seconds left
+
 xerrprio = LibStub("AceAddon-3.0"):NewAddon("xerrprio", "AceConsole-3.0", "AceEvent-3.0")
 local xerrprio = xerrprio
 
@@ -806,13 +809,22 @@ function XerrPrio:GetNextSpell()
     local prio = {}
 
     local guid = UnitGUID('target')
-    -- refresh dots if uvls proc
-    if self:PlayerHasProc(self.buffs.spells.uvls.id) and self.dotStats[guid] then
-        if self.dotStats[guid].vt and not self.dotStats[guid].vt.uvls then
-            tinsert(prio, self.icons.spells.vt)
+
+    -- uvls cases
+    if self:PlayerHasProc(self.buffs.spells.uvls.id) then
+        -- swd on 3 orbs - jackpot
+        if self:GetShadowOrbs() == 3 then
+            -- todo add slot machine sound here
+            tinsert(prio, self.icons.spells.swd)
         end
-        if self.dotStats[guid].swp and not self.dotStats[guid].swp.uvls then
-            tinsert(prio, self.icons.spells.swp)
+        -- vt and swp
+        if self.dotStats[guid] then
+            if self.dotStats[guid].vt and not self.dotStats[guid].vt.uvls then
+                tinsert(prio, self.icons.spells.vt)
+            end
+            if self.dotStats[guid].swp and not self.dotStats[guid].swp.uvls then
+                tinsert(prio, self.icons.spells.swp)
+            end
         end
     end
 
@@ -827,14 +839,18 @@ function XerrPrio:GetNextSpell()
             if self.dotStats[guid].vt then
                 if self:GetSpellDamage(self.icons.spells.vt.id) >= self.dotStats[guid].vt.dps * (1 + XerrPrioDB.minDotDpsIncrease / 100) then
                     if self.lowestProcTime > 0 and self.lowestProcTime <= XerrPrioDB.refreshMinDuration then
-                        tinsert(prio, self.icons.spells.vt)
+                        if not self.dotStats[guid].vt.uvls then
+                            tinsert(prio, self.icons.spells.vt)
+                        end
                     end
                 end
             end
             if self.dotStats[guid].swp then
                 if self:GetSpellDamage(self.icons.spells.swp.id) >= self.dotStats[guid].swp.dps * (1 + XerrPrioDB.minDotDpsIncrease / 100) then
                     if self.lowestProcTime > 0 and self.lowestProcTime <= XerrPrioDB.refreshMinDuration then
-                        tinsert(prio, self.icons.spells.swp)
+                        if not self.dotStats[guid].swp.uvls then
+                            tinsert(prio, self.icons.spells.swp)
+                        end
                     end
                 end
             end
