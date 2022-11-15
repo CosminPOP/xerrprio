@@ -1032,7 +1032,7 @@ function XerrPrio:GetSpellDamage(id)
     XerrPrioTooltipFrame:SetOwner(UIParent, "ANCHOR_NONE")
     XerrPrioTooltipFrame:SetSpellByID(id);
     local tooltipDescription = XerrPrioTooltipFrameTextLeft4:GetText();
-    local totalDmg, tickTime, dps = 0, 0, 0
+    local totalDmg, duration, dps = 0, 0, 0
 
     if strfind(tooltipDescription, "Cooldown remaining") then
         tooltipDescription = XerrPrioTooltipFrameTextLeft5:GetText()
@@ -1041,15 +1041,15 @@ function XerrPrio:GetSpellDamage(id)
     tooltipDescription = self:replace(tooltipDescription, ',', '')
 
     if id == self.icons.spells.swp.id then
-        _, _, totalDmg, tickTime = strfind(tooltipDescription, "(%S+) Shadow damage over (%S+)")
+        _, _, totalDmg, duration = strfind(tooltipDescription, "(%S+) Shadow damage over (%S+)")
     end
     if id == self.icons.spells.vt.id then
-        _, _, totalDmg, tickTime = strfind(tooltipDescription, "Causes (%S+) Shadow damage over (%S+)")
+        _, _, totalDmg, duration = strfind(tooltipDescription, "Causes (%S+) Shadow damage over (%S+)")
     end
 
-    dps = tonumber(totalDmg) / tonumber(tickTime)
+    dps = tonumber(totalDmg) / tonumber(duration)
 
-    return dps, totalDmg, tickTime
+    return dps, totalDmg, duration
 
 end
 
