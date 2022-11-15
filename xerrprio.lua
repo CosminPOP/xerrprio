@@ -369,14 +369,14 @@ XerrPrio.Worker:SetScript("OnUpdate", function(self, elapsed)
                         local refreshPower = floor(100 * current_dps / stats.dps - 100)
 
                         if current_dps >= stats.dps * (1 + XerrPrioDB.minDotDpsIncrease / 100) then
-                            _G[frame .. 'Up1']:Show()
+                            _G[frame .. 'ArrowsUp1']:Show()
                             if refreshPower >= 10 and refreshPower < 20 then
-                                _G[frame .. 'Up1']:Show()
-                                _G[frame .. 'Up2']:Show()
+                                _G[frame .. 'ArrowsUp1']:Show()
+                                _G[frame .. 'ArrowsUp2']:Show()
                             elseif refreshPower >= 20 then
-                                _G[frame .. 'Up1']:Show()
-                                _G[frame .. 'Up2']:Show()
-                                _G[frame .. 'Up3']:Show()
+                                _G[frame .. 'ArrowsUp1']:Show()
+                                _G[frame .. 'ArrowsUp2']:Show()
+                                _G[frame .. 'ArrowsUp3']:Show()
                             end
 
                             if XerrPrio.lowestProcTime ~= 0 then
@@ -400,25 +400,25 @@ XerrPrio.Worker:SetScript("OnUpdate", function(self, elapsed)
                             _G[frame .. 'RefreshSpark']:Hide()
                             _G[frame .. 'RefreshBar']:Hide()
 
-                            _G[frame .. 'Up1']:Hide()
-                            _G[frame .. 'Up2']:Hide()
-                            _G[frame .. 'Up3']:Hide()
+                            _G[frame .. 'ArrowsUp1']:Hide()
+                            _G[frame .. 'ArrowsUp2']:Hide()
+                            _G[frame .. 'ArrowsUp3']:Hide()
                         end
 
-                        _G[frame .. 'Down1']:Hide()
-                        _G[frame .. 'Down2']:Hide()
-                        _G[frame .. 'Down3']:Hide()
+                        _G[frame .. 'ArrowsDown1']:Hide()
+                        _G[frame .. 'ArrowsDown2']:Hide()
+                        _G[frame .. 'ArrowsDown3']:Hide()
 
                         if current_dps < stats.dps then
                             if refreshPower < 0 and refreshPower > -10 then
-                                _G[frame .. 'Down1']:Show()
+                                _G[frame .. 'ArrowsDown1']:Show()
                             elseif refreshPower <= -10 and refreshPower > -20 then
-                                _G[frame .. 'Down1']:Show()
-                                _G[frame .. 'Down2']:Show()
+                                _G[frame .. 'ArrowsDown1']:Show()
+                                _G[frame .. 'ArrowsDown2']:Show()
                             elseif refreshPower <= -20 then
-                                _G[frame .. 'Down1']:Show()
-                                _G[frame .. 'Down2']:Show()
-                                _G[frame .. 'Down3']:Show()
+                                _G[frame .. 'ArrowsDown1']:Show()
+                                _G[frame .. 'ArrowsDown2']:Show()
+                                _G[frame .. 'ArrowsDown3']:Show()
                             end
                         end
 
@@ -537,32 +537,32 @@ XerrPrio.OptionsAnim:SetScript("OnUpdate", function(self, elapsed)
             for _, spell in next, XerrPrio.bars.spells do
                 local frame = spell.frame:GetName()
 
-                _G[frame .. 'Up1']:Hide()
-                _G[frame .. 'Up2']:Hide()
-                _G[frame .. 'Up3']:Hide()
+                _G[frame .. 'ArrowsUp1']:Hide()
+                _G[frame .. 'ArrowsUp2']:Hide()
+                _G[frame .. 'ArrowsUp3']:Hide()
 
-                if self.tl <= 15 then
-                    _G[frame .. 'Up1']:Show()
+                if self.tl <= 18 then
+                    _G[frame .. 'ArrowsUp1']:Show()
                 end
                 if self.tl <= 10 then
-                    _G[frame .. 'Up2']:Show()
+                    _G[frame .. 'ArrowsUp2']:Show()
                 end
                 if self.tl <= 5 then
-                    _G[frame .. 'Up3']:Show()
+                    _G[frame .. 'ArrowsUp3']:Show()
                 end
 
-                _G[frame .. 'Down1']:Hide()
-                _G[frame .. 'Down2']:Hide()
-                _G[frame .. 'Down3']:Hide()
+                _G[frame .. 'ArrowsDown1']:Hide()
+                _G[frame .. 'ArrowsDown2']:Hide()
+                _G[frame .. 'ArrowsDown3']:Hide()
 
-                if self.tl <= 15 then
-                    _G[frame .. 'Down1']:Show()
+                if self.tl <= 18 then
+                    _G[frame .. 'ArrowsDown1']:Show()
                 end
                 if self.tl <= 10 then
-                    _G[frame .. 'Down2']:Show()
+                    _G[frame .. 'ArrowsDown2']:Show()
                 end
                 if self.tl <= 5 then
-                    _G[frame .. 'Down3']:Show()
+                    _G[frame .. 'ArrowsDown3']:Show()
                 end
 
                 if self.tl == self.duration then
