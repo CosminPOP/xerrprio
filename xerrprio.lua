@@ -304,6 +304,8 @@ XerrPrio.Worker:SetScript("OnUpdate", function(self, elapsed)
         self.bars.enabled = not XerrPrio.paused and XerrPrioDB.bars and not XerrPrioDB.configMode
         self.icons.enabled = not XerrPrio.paused and XerrPrioDB.icons and not XerrPrioDB.configMode
 
+        local guid = UnitGUID('target')
+
         if XerrPrioDB.configMode or XerrPrio.paused then
             XerrPrio.nextSpell = {
                 [1] = { id = 0, icon = 'Interface\\Icons\\INV_Misc_QuestionMark' },
@@ -361,8 +363,9 @@ XerrPrio.Worker:SetScript("OnUpdate", function(self, elapsed)
                 local tl, perc, duration = XerrPrio:GetDebuffInfo(spell.id)
                 local frame = spell.frame:GetName()
                 _G[frame]:Hide()
+
                 if tl > 0 then
-                    local guid = UnitGUID('target')
+
                     if XerrPrio.dotStats[guid] and XerrPrio.dotStats[guid][key] then
                         local stats = XerrPrio.dotStats[guid][key]
 
@@ -514,7 +517,7 @@ XerrPrio.Worker:SetScript("OnUpdate", function(self, elapsed)
         end
 
         -- Icons
-        XerrPrio.nextSpell = XerrPrio:GetNextSpell()
+        XerrPrio.nextSpell = XerrPrio:GetNextSpell(guid)
         if self.icons.enabled then
             XerrPrioIconsIcon:SetTexture(XerrPrio.nextSpell[1].icon)
             XerrPrioIconsIcon2:SetTexture(XerrPrio.nextSpell[2].icon)
@@ -804,11 +807,9 @@ end
 
 ---GetNextSpell - get next spell for priority casting
 ---@return table next and next2 spell to cast
-function XerrPrio:GetNextSpell()
+function XerrPrio:GetNextSpell(guid)
 
     local prio = {}
-
-    local guid = UnitGUID('target')
 
     -- uvls cases
     if self:PlayerHasProc(self.buffs.spells.uvls.id) then
