@@ -145,6 +145,10 @@ XerrPrio:SetScript("OnEvent", function(self, event, arg1, _, _, _, arg5)
             end
             return
         end
+        if event == 'PLAYER_REGEN_ENABLED' then
+            self.Worker.dotScanner.enabled = false
+            return
+        end
         if event == 'PLAYER_TARGET_CHANGED' then
             if XerrPrioDB.configMode then
                 XerrPrioBars:Show()
