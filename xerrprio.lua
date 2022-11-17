@@ -359,7 +359,7 @@ XerrPrio.Worker:SetScript("OnUpdate", function(self, elapsed)
             end
         end
 
-        local uvls = XerrPrio:PlayerHasProc(XerrPrio.buffs.spells.uvls.id)
+        local uvls, uvlsDuration = XerrPrio:PlayerHasProc(XerrPrio.buffs.spells.uvls.id)
         local vtCastTime = select(3, XerrPrio:GetSpellInfo(XerrPrio.bars.spells.vt.id))
 
         -- Bars
@@ -401,7 +401,7 @@ XerrPrio.Worker:SetScript("OnUpdate", function(self, elapsed)
                         end
                     end
 
-                    XerrPrio:AddLightningBar(frame, stats, perc)
+                    XerrPrio:AddLightningBar(frame, stats, perc, spell.id)
 
                     XerrPrio:AddRefreshBar(frame, refreshPower, color, uvls, duration, perc, tl, stats, spell.id, vtCastTime)
 
@@ -424,7 +424,7 @@ XerrPrio.Worker:SetScript("OnUpdate", function(self, elapsed)
         end
 
         -- Icons
-        XerrPrio.nextSpell = XerrPrio:GetNextSpell(guid, vtCastTime)
+        XerrPrio.nextSpell = XerrPrio:GetNextSpell(guid, uvls, uvlsDuration, vtCastTime)
         if self.icons.enabled then
             XerrPrioIconsIcon:SetTexture(XerrPrio.nextSpell[1].icon)
             XerrPrioIconsIcon2:SetTexture(XerrPrio.nextSpell[2].icon)
@@ -565,7 +565,7 @@ function XerrPrio:SpellCast(id, guid)
 
             self.dotStats[guid][key].uvls = self:PlayerHasProc(self.buffs.spells.uvls.id)
 
-            self.dotStats[guid][key].dps = self:GetSpellDamage(spell.id)
+            self.dotStats[guid][key].dps, _, self.dotStats[guid][key].duration = self:GetSpellDamage(spell.id)
 
             self.dotStats[guid][key].uvlsExpirationTime = GetTime() + self.dotStats[guid][key].duration
 
@@ -636,14 +636,15 @@ end
 
 ---PlayerHasProc - check if player has a proc/buff
 ---@param procId number id of proc
----@return boolean
+---@return table boolean, duration
 function XerrPrio:PlayerHasProc(procId)
     for i = 1, 40 do
-        if select(11, UnitBuff('player', i)) == procId then
-            return true
+        local _, _, _, _, _, _, expirationTime, unitCaster, _, _, spellId = UnitBuff("player", i)
+        if spellId == procId and unitCaster == "player" then
+            return true, expirationTime - GetTime()
         end
     end
-    return false
+    return false, 0
 end
 
 ---GetWAIconColor - check if spell is next, next2, inRange, and get icon. Helper for wa
@@ -719,26 +720,33 @@ function XerrPrio:PopulateSpellBookID()
 end
 
 ---GetNextSpell - get next spell for priority casting
+---@param guid number
+---@param uvls boolean
+---@param uvlsDuration number
+---@param vtCastTime number
 ---@return table next and next2 spell to cast
-function XerrPrio:GetNextSpell(guid, vtCastTime)
+function XerrPrio:GetNextSpell(guid, uvls, uvlsDuration, vtCastTime)
 
     local prio = {}
 
     -- uvls cases
-    if self:PlayerHasProc(self.buffs.spells.uvls.id) then
+    if uvls then
         -- swd on 3 orbs - jackpot
         if self:GetShadowOrbs() == 3 then
             -- todo add slot machine sound here
             tinsert(prio, self.icons.spells.dp)
         end
-        -- vt and swp
-        if self.dotStats[guid] then
-            if self.dotStats[guid].vt and not self.dotStats[guid].vt.uvls then
+        -- vt and swp if already exists
+        if self.dotStats[guid] and self.dotStats[guid].vt and not self.dotStats[guid].vt.uvls then
+            tinsert(prio, self.icons.spells.vt)
+        elseif self.dotStats[guid] and self.dotStats[guid].swp and not self.dotStats[guid].swp.uvls then
+            tinsert(prio, self.icons.spells.swp)
+        else
+            -- vt and swp if it doesnt exist
+            if uvlsDuration >= vtCastTime + 0.2 then
                 tinsert(prio, self.icons.spells.vt)
             end
-            if self.dotStats[guid].swp and not self.dotStats[guid].swp.uvls then
-                tinsert(prio, self.icons.spells.swp)
-            end
+            tinsert(prio, self.icons.spells.swp)
         end
     end
 
@@ -850,7 +858,7 @@ function XerrPrio:GetNextSpell(guid, vtCastTime)
 
     -- vt
     if self:GetDebuffInfo(self.icons.spells.vt.id) >= 0 then
-        if self:GetDebuffInfo(self.icons.spells.vt.id) < select(3, self:GetSpellInfo(self.icons.spells.vt.id)) then
+        if self:GetDebuffInfo(self.icons.spells.vt.id) < vtCastTime then
             tinsert(prio, self.icons.spells.vt)
         end
     end
@@ -860,7 +868,7 @@ function XerrPrio:GetNextSpell(guid, vtCastTime)
     end
 
     -- swp
-    if self:GetDebuffInfo(self.icons.spells.swp.id) < 1 then
+    if self:GetDebuffInfo(self.icons.spells.swp.id) < 0.8 then
         tinsert(prio, self.icons.spells.swp)
     end
 
@@ -997,7 +1005,7 @@ function XerrPrio:GetSpellDamage(id)
 
     dps = tonumber(totalDmg) / tonumber(duration)
 
-    return dps, totalDmg, duration
+    return dps, tonumber(totalDmg), tonumber(duration)
 
 end
 
@@ -1049,13 +1057,17 @@ function XerrPrio:AddArrows(frame, uvls, refreshPower, currentDps, stats)
     end
 end
 
-function XerrPrio:AddLightningBar(frame, stats, perc)
+function XerrPrio:AddLightningBar(frame, stats, perc, spellId)
     _G[frame .. 'BarLightning']:Hide()
 
     if stats.uvls then
-        _G[frame .. 'BarLightning']:SetAlpha(rand())
         _G[frame .. 'BarLightning']:SetWidth(XerrPrioDB.barWidth * perc)
-        _G[frame .. 'BarLightning']:SetTexCoord(0, perc, 0, 1)
+        _G[frame .. 'BarLightning']:SetVertexColor(1.3 - rand(), 1.3 - rand(), 1, rand())
+        if spellId == self.bars.spells.swp.id then
+            _G[frame .. 'BarLightning']:SetTexCoord(0, perc, 0, 1)
+        else
+            _G[frame .. 'BarLightning']:SetTexCoord(1, 1 - perc, 0, 1)
+        end
         _G[frame .. 'BarLightning']:Show()
     end
 end
@@ -1066,7 +1078,6 @@ function XerrPrio:AddRefreshBar(frame, refreshPower, color, uvls, duration, perc
     _G[frame .. 'RefreshBar']:Hide()
 
     if refreshPower >= XerrPrioDB.minDotDpsIncrease or uvls then
-
 
         if XerrPrio.lowestProcTime > 0 then
 
@@ -1136,6 +1147,13 @@ end
 function XerrPrio:AddDotTicks(frame, spell, key, stats, tl, vtCastTime, duration)
     for i = 1, #spell.ticks do
         spell.ticks[i]:Hide()
+    end
+
+    if stats.uvls then
+        if spell.id == XerrPrio.bars.spells.vt.id then
+            _G[spell.castTimeTick:GetName() .. 'Tick']:Hide()
+        end
+        return
     end
 
     if XerrPrioDB[key].showTicks then
