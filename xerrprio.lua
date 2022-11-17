@@ -1,6 +1,6 @@
 local _G = _G
 local tinsert, tablesize, select, strfind, tonumber = tinsert, table.getn, select, strfind, tonumber
-local strsub, strlen, sformat, floor = strsub, strlen, string.format, math.floor
+local strsub, strlen, sformat, floor, rand = strsub, strlen, string.format, math.floor, math.random
 local _, class = UnitClass('player')
 
 -- known issues
@@ -33,7 +33,7 @@ XerrPrio.OptionsAnim = CreateFrame("Frame")
 XerrPrio.init = false
 XerrPrio.paused = true
 XerrPrio.spellBookSpells = {}
-XerrPrio.hp_path = 'Interface\\AddOns\\HaloPro\\HaloPro_Art\\Custom\\';
+XerrPrio.hp_path = 'Interface\\AddOns\\HaloPro\\HaloPro_Art\\Shadow\\';
 XerrPrio.hp_path_icon = 'Interface\\AddOns\\HaloPro\\HaloPro_Art\\Shadow_Icon\\';
 
 XerrPrio.lowestProcTime = 0
@@ -84,6 +84,7 @@ XerrPrio.buffs = {
         timewarp = { id = 80353, duration = 0 },
         ancienthysteria = { id = 90355, duration = 0 },
         tof = { id = 123254, duration = 0 },
+        --uvls = { id = 139, duration = 0, icon = '' },
         uvls = { id = 138963, duration = 0, icon = '' },
     }
 }
@@ -120,6 +121,7 @@ XerrPrio:RegisterEvent('PLAYER_ENTERING_WORLD')
 XerrPrio:RegisterEvent('PLAYER_TARGET_CHANGED')
 XerrPrio:RegisterEvent('PLAYER_SPECIALIZATION_CHANGED')
 XerrPrio:RegisterEvent('PLAYER_TALENT_UPDATE')
+XerrPrio:RegisterEvent('PLAYER_REGEN_ENABLED')
 XerrPrio:RegisterEvent('VARIABLES_LOADED')
 XerrPrio:SetScript("OnEvent", function(self, event, arg1, _, _, _, arg5)
     if event then
@@ -158,14 +160,11 @@ XerrPrio:SetScript("OnEvent", function(self, event, arg1, _, _, _, arg5)
             end
             if not UnitExists('target') then
                 self.paused = true
-                return
             else
                 if UnitReaction('player', 'target') and UnitReaction('player', 'target') >= 5 then
                     self.paused = true
-                    return
                 else
                     self.paused = false
-                    return
                 end
             end
             return
@@ -360,157 +359,61 @@ XerrPrio.Worker:SetScript("OnUpdate", function(self, elapsed)
             end
         end
 
+        local uvls = XerrPrio:PlayerHasProc(XerrPrio.buffs.spells.uvls.id)
+        local vtCastTime = select(3, XerrPrio:GetSpellInfo(XerrPrio.bars.spells.vt.id))
+
         -- Bars
         if self.bars.enabled then
 
             for key, spell in next, XerrPrio.bars.spells do
+
                 local tl, perc, duration = XerrPrio:GetDebuffInfo(spell.id)
                 local frame = spell.frame:GetName()
+
                 _G[frame]:Hide()
 
-                if tl > 0 then
+                if tl > 0 and XerrPrio.dotStats[guid] and XerrPrio.dotStats[guid][key] then
 
-                    if XerrPrio.dotStats[guid] and XerrPrio.dotStats[guid][key] then
-                        local stats = XerrPrio.dotStats[guid][key]
+                    local stats = XerrPrio.dotStats[guid][key]
 
-                        if stats.duration == XerrPrio.durationFallback or stats.interval == XerrPrio.intervalFallback then
-                            self.dotScanner.spellId = spell.id
-                            self.dotScanner.enabled = true
-                            self.dotScanner.guid = guid
-                            return
-                        end
-
-                        self.show = true
-
-                        _G[frame .. 'Bar']:SetWidth(XerrPrioDB.barWidth * perc)
-                        _G[frame .. 'TextsTimeLeft']:SetText(floor(tl))
-
-
-                        local uvls = XerrPrio:PlayerHasProc(XerrPrio.buffs.spells.uvls.id)
-                        local current_dps = XerrPrio:GetSpellDamage(spell.id)
-
-                        XerrPrio.lowestProcTime = XerrPrio:GetLowestProcTime()
-
-                        local color = XerrPrioDB[key].refreshBarColor
-
-                        _G[frame .. 'RefreshBar']:SetVertexColor(1, 1, 1, 0.2)
-
-                        local refreshPower = floor(100 * current_dps / stats.dps - 100)
-
-                        if current_dps >= stats.dps * (1 + XerrPrioDB.minDotDpsIncrease / 100) then
-                            _G[frame .. 'ArrowsUp1']:Show()
-                            if refreshPower >= 10 and refreshPower < 20 then
-                                _G[frame .. 'ArrowsUp1']:Show()
-                                _G[frame .. 'ArrowsUp2']:Show()
-                            elseif refreshPower >= 20 then
-                                _G[frame .. 'ArrowsUp1']:Show()
-                                _G[frame .. 'ArrowsUp2']:Show()
-                                _G[frame .. 'ArrowsUp3']:Show()
-                            end
-
-                            if XerrPrio.lowestProcTime ~= 0 then
-
-                                if XerrPrio.lowestProcTime <= XerrPrioDB.refreshMinDuration then
-                                    _G[frame .. 'RefreshBar']:SetVertexColor(color.r, color.g, color.b, color.a)
-                                end
-
-                                if XerrPrioDB.barWidth * (XerrPrio.lowestProcTime / duration) > XerrPrioDB.barWidth * perc then
-                                    _G[frame .. 'RefreshBar']:SetWidth(XerrPrioDB.barWidth * perc)
-                                else
-                                    _G[frame .. 'RefreshBar']:SetWidth(XerrPrioDB.barWidth * (XerrPrio.lowestProcTime / duration))
-                                end
-
-                                _G[frame .. 'RefreshSpark']:Show()
-                                _G[frame .. 'RefreshBar']:Show()
-
-                            end
-
-                        else
-                            _G[frame .. 'RefreshSpark']:Hide()
-                            _G[frame .. 'RefreshBar']:Hide()
-
-                            _G[frame .. 'ArrowsUp1']:Hide()
-                            _G[frame .. 'ArrowsUp2']:Hide()
-                            _G[frame .. 'ArrowsUp3']:Hide()
-                        end
-
-                        _G[frame .. 'ArrowsDown1']:Hide()
-                        _G[frame .. 'ArrowsDown2']:Hide()
-                        _G[frame .. 'ArrowsDown3']:Hide()
-
-                        if current_dps < stats.dps then
-                            if refreshPower < 0 and refreshPower > -10 then
-                                _G[frame .. 'ArrowsDown1']:Show()
-                            elseif refreshPower <= -10 and refreshPower > -20 then
-                                _G[frame .. 'ArrowsDown1']:Show()
-                                _G[frame .. 'ArrowsDown2']:Show()
-                            elseif refreshPower <= -20 then
-                                _G[frame .. 'ArrowsDown1']:Show()
-                                _G[frame .. 'ArrowsDown2']:Show()
-                                _G[frame .. 'ArrowsDown3']:Show()
-                            end
-                        end
-
-                        -- refresh before last tick
-                        if tl <= stats.interval then
-                            _G[frame .. 'RefreshBar']:SetVertexColor(color.r, color.g, color.b, color.a)
-                            _G[frame .. 'RefreshBar']:SetWidth(XerrPrioDB.barWidth * (tl / duration))
-                            _G[frame .. 'RefreshSpark']:Show()
-                            _G[frame .. 'RefreshBar']:Show()
-                        end
-
-                        if stats.uvls then
-                            if GetTime() >= stats.uvlsExpirationTime then
-                                stats.uvls = false
-                            end
-                        end
-
-                        if uvls then
-                            if stats.uvls then
-                                _G[frame .. 'UVLSIcon']:SetVertexColor(1, 1, 1, 1)
-                                _G[frame .. 'UVLSIcon']:Show()
-                            else
-                                _G[frame .. 'UVLSIcon']:SetVertexColor(1, 0, 0, 1)
-                                _G[frame .. 'UVLSIcon']:Show()
-                            end
-                        else
-                            if stats.uvls then
-                                _G[frame .. 'UVLSIcon']:SetVertexColor(1, 1, 1, 1)
-                                _G[frame .. 'UVLSIcon']:Show()
-                            else
-                                _G[frame .. 'UVLSIcon']:Hide()
-                            end
-                        end
-
-                        for i = 1, #spell.ticks do
-                            spell.ticks[i]:Hide()
-                        end
-                        if XerrPrioDB[key].showTicks then
-                            local ticks = floor(stats.duration / stats.interval + 0.5)
-                            local numTicks = XerrPrioDB[key].showOnlyLastTick and 2 or ticks
-                            if ticks > 0 then
-                                for i = 1, numTicks do
-                                    spell.ticks[i]:SetPoint("TOPLEFT", _G[frame], "TOPLEFT", (XerrPrioDB.barWidth / ticks) * (i - 1), 0)
-                                    spell.ticks[i]:Show()
-                                end
-                            end
-
-                            if spell.id == XerrPrio.bars.spells.vt.id then
-                                local vtCastTime = select(3, XerrPrio:GetSpellInfo(spell.id))
-                                _G[spell.castTimeTick:GetName() .. 'Tick']:SetWidth(XerrPrioDB.barWidth * vtCastTime / duration)
-
-                                if tl >= stats.interval and tl <= stats.interval + vtCastTime then
-                                    _G[spell.castTimeTick:GetName() .. 'Tick']:SetVertexColor(1,1,1,0.5)
-                                else
-                                    _G[spell.castTimeTick:GetName() .. 'Tick']:SetVertexColor(0,0,0,0.5)
-                                end
-
-                            end
-
-                        end
-                        _G[frame]:Show()
+                    if stats.duration == XerrPrio.durationFallback or stats.interval == XerrPrio.intervalFallback then
+                        self.dotScanner.spellId = spell.id
+                        self.dotScanner.enabled = true
+                        self.dotScanner.guid = guid
+                        return
                     end
+
+                    self.show = true
+
+                    _G[frame .. 'Bar']:SetWidth(XerrPrioDB.barWidth * perc)
+                    _G[frame .. 'TextsTimeLeft']:SetText(floor(tl))
+                    _G[frame .. 'RefreshBar']:SetVertexColor(1, 1, 1, 0.2)
+
+                    local currentDps = XerrPrio:GetSpellDamage(spell.id)
+                    local color = XerrPrioDB[key].refreshBarColor
+                    local refreshPower = floor(100 * currentDps / stats.dps - 100)
+
+                    XerrPrio.lowestProcTime = XerrPrio:GetLowestProcTime(uvls)
+
+                    if stats.uvls then
+                        if GetTime() >= stats.uvlsExpirationTime then
+                            stats.uvls = false
+                        end
+                    end
+
+                    XerrPrio:AddLightningBar(frame, stats, perc)
+
+                    XerrPrio:AddRefreshBar(frame, refreshPower, color, uvls, duration, perc, tl, stats, spell.id, vtCastTime)
+
+                    XerrPrio:AddArrows(frame, uvls, refreshPower, currentDps, stats)
+
+                    XerrPrio:AddUVLSIcon(frame, stats, uvls, key)
+
+                    XerrPrio:AddDotTicks(frame, spell, key, stats, tl, vtCastTime, duration)
+
+                    _G[frame]:Show()
                 end
+
             end
 
             if self.show then
@@ -521,7 +424,7 @@ XerrPrio.Worker:SetScript("OnUpdate", function(self, elapsed)
         end
 
         -- Icons
-        XerrPrio.nextSpell = XerrPrio:GetNextSpell(guid)
+        XerrPrio.nextSpell = XerrPrio:GetNextSpell(guid, vtCastTime)
         if self.icons.enabled then
             XerrPrioIconsIcon:SetTexture(XerrPrio.nextSpell[1].icon)
             XerrPrioIconsIcon2:SetTexture(XerrPrio.nextSpell[2].icon)
@@ -612,9 +515,9 @@ XerrPrio.OptionsAnim:SetScript("OnUpdate", function(self, elapsed)
                         _G[spell.castTimeTick:GetName() .. 'Tick']:SetWidth(XerrPrioDB.barWidth * vtCastTime / XerrPrio.OptionsAnim.duration)
 
                         if self.tl >= 3 and self.tl <= 3 + vtCastTime then
-                            _G[spell.castTimeTick:GetName() .. 'Tick']:SetVertexColor(1,1,1,0.5)
+                            _G[spell.castTimeTick:GetName() .. 'Tick']:SetVertexColor(1, 1, 1, 0.5)
                         else
-                            _G[spell.castTimeTick:GetName() .. 'Tick']:SetVertexColor(0,0,0,0.5)
+                            _G[spell.castTimeTick:GetName() .. 'Tick']:SetVertexColor(0, 0, 0, 0.5)
                         end
 
                         spell.castTimeTick:Show()
@@ -685,17 +588,23 @@ end
 
 ---GetLowestProcTime - get lowest temporary buff/proc duration
 ---@return number duration
-function XerrPrio:GetLowestProcTime()
+function XerrPrio:GetLowestProcTime(uvls)
 
     local lowestTime = 100
 
     for i = 1, 40 do
-        for _, spell in next, self.buffs.spells do
-            local name, _, _, _, _, _, expirationTime, _, _, _, spellId = UnitBuff("player", i)
-            if name then
-                if spellId == spell.id then
-                    if expirationTime - GetTime() < lowestTime then
-                        lowestTime = expirationTime - GetTime()
+        local name, _, _, _, _, _, expirationTime, _, _, _, spellId = UnitBuff("player", i)
+        if name then
+            if uvls then
+                if spellId == self.buffs.spells.uvls.id then
+                    return expirationTime - GetTime()
+                end
+            else
+                for _, spell in next, self.buffs.spells do
+                    if spellId == spell.id then
+                        if expirationTime - GetTime() < lowestTime then
+                            lowestTime = expirationTime - GetTime()
+                        end
                     end
                 end
             end
@@ -811,7 +720,7 @@ end
 
 ---GetNextSpell - get next spell for priority casting
 ---@return table next and next2 spell to cast
-function XerrPrio:GetNextSpell(guid)
+function XerrPrio:GetNextSpell(guid, vtCastTime)
 
     local prio = {}
 
@@ -820,7 +729,7 @@ function XerrPrio:GetNextSpell(guid)
         -- swd on 3 orbs - jackpot
         if self:GetShadowOrbs() == 3 then
             -- todo add slot machine sound here
-            tinsert(prio, self.icons.spells.swd)
+            tinsert(prio, self.icons.spells.dp)
         end
         -- vt and swp
         if self.dotStats[guid] then
@@ -843,7 +752,7 @@ function XerrPrio:GetNextSpell(guid)
         if self.dotStats[guid] then
             if self.dotStats[guid].vt then
                 if self:GetSpellDamage(self.icons.spells.vt.id) >= self.dotStats[guid].vt.dps * (1 + XerrPrioDB.minDotDpsIncrease / 100) then
-                    if self.lowestProcTime > 0 and self.lowestProcTime <= XerrPrioDB.refreshMinDuration then
+                    if self.lowestProcTime > 0.3 and self.lowestProcTime <= XerrPrioDB.refreshMinDuration then
                         if not self.dotStats[guid].vt.uvls then
                             tinsert(prio, self.icons.spells.vt)
                         end
@@ -852,7 +761,7 @@ function XerrPrio:GetNextSpell(guid)
             end
             if self.dotStats[guid].swp then
                 if self:GetSpellDamage(self.icons.spells.swp.id) >= self.dotStats[guid].swp.dps * (1 + XerrPrioDB.minDotDpsIncrease / 100) then
-                    if self.lowestProcTime > 0 and self.lowestProcTime <= XerrPrioDB.refreshMinDuration then
+                    if self.lowestProcTime > 0.3 + vtCastTime and self.lowestProcTime <= XerrPrioDB.refreshMinDuration then
                         if not self.dotStats[guid].swp.uvls then
                             tinsert(prio, self.icons.spells.swp)
                         end
@@ -1091,6 +1000,169 @@ function XerrPrio:GetSpellDamage(id)
     return dps, totalDmg, duration
 
 end
+
+function XerrPrio:AddArrows(frame, uvls, refreshPower, currentDps, stats)
+
+    _G[frame .. 'ArrowsUp1']:Hide()
+    _G[frame .. 'ArrowsUp2']:Hide()
+    _G[frame .. 'ArrowsUp3']:Hide()
+    -- down
+    _G[frame .. 'ArrowsDown1']:Hide()
+    _G[frame .. 'ArrowsDown2']:Hide()
+    _G[frame .. 'ArrowsDown3']:Hide()
+
+    if stats.uvls then
+        return
+    else
+        if uvls then
+            _G[frame .. 'ArrowsUp1']:Show()
+            _G[frame .. 'ArrowsUp2']:Show()
+            _G[frame .. 'ArrowsUp3']:Show()
+        else
+            if refreshPower >= XerrPrioDB.minDotDpsIncrease then
+                --up
+                _G[frame .. 'ArrowsUp1']:Show()
+                if refreshPower >= 10 and refreshPower < 20 then
+                    _G[frame .. 'ArrowsUp1']:Show()
+                    _G[frame .. 'ArrowsUp2']:Show()
+                elseif refreshPower >= 20 then
+                    _G[frame .. 'ArrowsUp1']:Show()
+                    _G[frame .. 'ArrowsUp2']:Show()
+                    _G[frame .. 'ArrowsUp3']:Show()
+                end
+            else
+                -- down
+                if currentDps < stats.dps then
+                    if refreshPower < 0 and refreshPower > -10 then
+                        _G[frame .. 'ArrowsDown1']:Show()
+                    elseif refreshPower <= -10 and refreshPower > -20 then
+                        _G[frame .. 'ArrowsDown1']:Show()
+                        _G[frame .. 'ArrowsDown2']:Show()
+                    elseif refreshPower <= -20 then
+                        _G[frame .. 'ArrowsDown1']:Show()
+                        _G[frame .. 'ArrowsDown2']:Show()
+                        _G[frame .. 'ArrowsDown3']:Show()
+                    end
+                end
+            end
+        end
+    end
+end
+
+function XerrPrio:AddLightningBar(frame, stats, perc)
+    _G[frame .. 'BarLightning']:Hide()
+
+    if stats.uvls then
+        _G[frame .. 'BarLightning']:SetAlpha(rand())
+        _G[frame .. 'BarLightning']:SetWidth(XerrPrioDB.barWidth * perc)
+        _G[frame .. 'BarLightning']:SetTexCoord(0, perc, 0, 1)
+        _G[frame .. 'BarLightning']:Show()
+    end
+end
+
+function XerrPrio:AddRefreshBar(frame, refreshPower, color, uvls, duration, perc, tl, stats, spellId, vtCastTime)
+
+    _G[frame .. 'RefreshSpark']:Hide()
+    _G[frame .. 'RefreshBar']:Hide()
+
+    if refreshPower >= XerrPrioDB.minDotDpsIncrease or uvls then
+
+
+        if XerrPrio.lowestProcTime > 0 then
+
+            if uvls then
+                color = { r = 1, g = 0.843, b = 0, a = 1 } -- gold
+            else
+                if stats.uvls or (XerrPrio.lowestProcTime <= 0.3 and spellId == self.bars.spells.swp.id) or
+                        (XerrPrio.lowestProcTime <= 0.3 + vtCastTime and spellId == self.bars.spells.vt.id) then
+                    -- hide refresh if lowestProcTime <= 0.3 for swp and 0.3+vt cast for vt
+                    return
+                end
+            end
+
+            if XerrPrio.lowestProcTime <= XerrPrioDB.refreshMinDuration or uvls then
+                _G[frame .. 'RefreshBar']:SetVertexColor(color.r, color.g, color.b, color.a)
+            end
+
+            if XerrPrioDB.barWidth * (XerrPrio.lowestProcTime / duration) > XerrPrioDB.barWidth * perc then
+                _G[frame .. 'RefreshBar']:SetWidth(XerrPrioDB.barWidth * perc)
+            else
+                _G[frame .. 'RefreshBar']:SetWidth(XerrPrioDB.barWidth * (XerrPrio.lowestProcTime / duration))
+            end
+            _G[frame .. 'RefreshSpark']:Show()
+            _G[frame .. 'RefreshBar']:Show()
+
+            if not uvls then
+                if (spellId == self.bars.spells.swp.id and tl < 0.3) or
+                        (spellId == self.bars.spells.vt.id and tl < vtCastTime + 0.3) then
+                    _G[frame .. 'RefreshSpark']:Hide()
+                    _G[frame .. 'RefreshBar']:Hide()
+                end
+            end
+
+        end
+
+    end
+
+    -- refresh before last tick
+    if tl <= stats.interval and not stats.uvls then
+        _G[frame .. 'RefreshBar']:SetVertexColor(color.r, color.g, color.b, color.a)
+        _G[frame .. 'RefreshBar']:SetWidth(XerrPrioDB.barWidth * (tl / duration))
+        _G[frame .. 'RefreshSpark']:Show()
+        _G[frame .. 'RefreshBar']:Show()
+    end
+end
+
+function XerrPrio:AddUVLSIcon(frame, stats, uvls, key)
+    if uvls then
+        _G[frame .. 'Icon']:SetTexture(XerrPrio.buffs.spells.uvls.icon)
+
+        if stats.uvls then
+            _G[frame .. 'Icon']:SetDesaturated(false)
+        else
+            _G[frame .. 'Icon']:SetDesaturated(true)
+        end
+    else
+        if stats.uvls then
+            _G[frame .. 'Icon']:SetTexture(XerrPrio.buffs.spells.uvls.icon)
+            _G[frame .. 'Icon']:SetDesaturated(false)
+        else
+            _G[frame .. 'Icon']:SetTexture(XerrPrio.icons.spells[key].icon)
+            _G[frame .. 'Icon']:SetDesaturated(false)
+        end
+    end
+end
+
+function XerrPrio:AddDotTicks(frame, spell, key, stats, tl, vtCastTime, duration)
+    for i = 1, #spell.ticks do
+        spell.ticks[i]:Hide()
+    end
+
+    if XerrPrioDB[key].showTicks then
+
+        local ticks = floor(stats.duration / stats.interval + 0.5)
+        local numTicks = XerrPrioDB[key].showOnlyLastTick and 2 or ticks
+        if ticks > 0 then
+            for i = 1, numTicks do
+                spell.ticks[i]:SetPoint("TOPLEFT", _G[frame], "TOPLEFT", (XerrPrioDB.barWidth / ticks) * (i - 1), 0)
+                spell.ticks[i]:Show()
+            end
+        end
+
+        if spell.id == XerrPrio.bars.spells.vt.id then
+
+            _G[spell.castTimeTick:GetName() .. 'Tick']:SetWidth(XerrPrioDB.barWidth * vtCastTime / duration)
+
+            if tl >= stats.interval and tl <= stats.interval + vtCastTime then
+                _G[spell.castTimeTick:GetName() .. 'Tick']:SetVertexColor(1, 1, 1, 0.5)
+            else
+                _G[spell.castTimeTick:GetName() .. 'Tick']:SetVertexColor(0, 0, 0, 0.5)
+            end
+
+        end
+    end
+end
+
 
 --------------------
 --- Slash Commands
@@ -1797,8 +1869,6 @@ function XerrPrio:UpdateConfig()
         local background = XerrPrioDB.barBackgroundColor
         _G[frame .. 'Background']:SetVertexColor(background.r, background.g, background.b, background.a)
 
-        _G[frame .. 'UVLSIcon']:SetTexture(self.buffs.spells.uvls.icon)
-
         for i = 1, #spell.ticks do
             spell.ticks[i]:Hide()
         end
@@ -1826,7 +1896,7 @@ function XerrPrio:UpdateConfig()
                 if spell.ticks[2] then
                     spell.castTimeTick:SetPoint("LEFT", spell.ticks[2], "LEFT", 0, 0)
                     _G[spell.castTimeTick:GetName() .. 'Tick']:SetWidth(XerrPrioDB.barWidth * vtCastTime / XerrPrio.OptionsAnim.duration)
-                    _G[spell.castTimeTick:GetName() .. 'Tick']:SetVertexColor(0,0,0,0.5)
+                    _G[spell.castTimeTick:GetName() .. 'Tick']:SetVertexColor(0, 0, 0, 0.5)
                     spell.castTimeTick:Show()
                 end
             end

@@ -55,6 +55,16 @@
                 </Texture>
             </Layer>
             <Layer level="ARTWORK">
+                <Texture file="Interface\Addons\xerrprio\Melli-lightning" name="$parentBarLightning" alphaMode="ADD">
+                    <Size x="260" y="24"/>
+                    <Anchors>
+                        <Anchor point="TOPLEFT">
+                            <Offset>
+                                <AbsDimension x="0" y="0"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </Texture>
                 <Texture file="Interface\Addons\xerrprio\Melli" name="$parentRefreshBar">
                     <Size x="260" y="24"/>
                     <Anchors>
@@ -93,17 +103,6 @@
                         <Anchor point="LEFT" relativeTo="$parentBar" relativePoint="RIGHT">
                             <Offset>
                                 <AbsDimension x="-8" y="0"/>
-                            </Offset>
-                        </Anchor>
-                    </Anchors>
-                </Texture>
-                <Texture name="$parentUVLSIcon">
-                    <Size x="18" y="18"/>
-                    <TexCoords left="0.1" right="0.9" top="0.1" bottom="0.9"/>
-                    <Anchors>
-                        <Anchor point="LEFT">
-                            <Offset>
-                                <AbsDimension x="115" y="0"/>
                             </Offset>
                         </Anchor>
                     </Anchors>
