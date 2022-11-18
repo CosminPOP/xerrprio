@@ -107,7 +107,8 @@ XerrPrio.colors = {
 
     white = { r = 1, g = 1, b = 1, a = 1 },
     swpDefault = { r = 255 / 255, g = 65 / 255, b = 9 / 255, a = 1 },
-    vtDefault = { r = 60 / 255, g = 52 / 255, b = 175 / 255, a = 1 }
+    vtDefault = { r = 60 / 255, g = 52 / 255, b = 175 / 255, a = 1 },
+    gold = { r = 1, g = 0.843, b = 0, a = 1 }
 }
 
 --------------------
@@ -119,7 +120,6 @@ XerrPrio:RegisterEvent('UNIT_SPELLCAST_START')
 XerrPrio:RegisterEvent('ADDON_LOADED')
 XerrPrio:RegisterEvent('PLAYER_ENTERING_WORLD')
 XerrPrio:RegisterEvent('PLAYER_TARGET_CHANGED')
-XerrPrio:RegisterEvent('PLAYER_SPECIALIZATION_CHANGED')
 XerrPrio:RegisterEvent('PLAYER_TALENT_UPDATE')
 XerrPrio:RegisterEvent('PLAYER_REGEN_ENABLED')
 XerrPrio:RegisterEvent('VARIABLES_LOADED')
@@ -161,11 +161,7 @@ XerrPrio:SetScript("OnEvent", function(self, event, arg1, _, _, _, arg5)
             if not UnitExists('target') then
                 self.paused = true
             else
-                if UnitReaction('player', 'target') and UnitReaction('player', 'target') >= 5 then
-                    self.paused = true
-                else
-                    self.paused = false
-                end
+                self.paused = UnitReaction('player', 'target') and UnitReaction('player', 'target') >= 5
             end
             return
         end
@@ -819,7 +815,7 @@ function XerrPrio:GetNextSpell(guid, uvls, uvlsDuration, vtCastTime)
     -- shadow word: death
     if self:SWDPhase() and self:GetSpellCooldown(self.icons.spells.swd.id) == 0 then
         if self:GetDebuffInfo(self.icons.spells.dp.id) >= 0.2 then
-            if GetTime() - self.icons.spells.swd.lastCastTime >= 8 then
+            if GetTime() - self.icons.spells.swd.lastCastTime >= 9 then
                 tinsert(prio, self.icons.spells.swd)
             elseif self:GetSpellCooldown(self.icons.spells.mb.id) == 0 then
                 tinsert(prio, self.icons.spells.mb)
@@ -905,16 +901,15 @@ end
 ---TimeSinceLastSWD - get time since last swd cast, to track icd
 ---@return string time, formatted
 function XerrPrio:TimeSinceLastSWD()
-    local t = GetTime() - self.icons.spells.swd.lastCastTime
-    local icd = 8 - t
+    local icd = 9 - (GetTime() - self.icons.spells.swd.lastCastTime)
     if icd > 0 and self:GetSpellCooldown(self.icons.spells.swd.id) == 0 then
-        return 'i' .. sformat(icd > 2 and "%d" or "%.1f", icd)
+        return '^' .. sformat(icd > 1 and "%d" or "%.1f", icd)
     else
         local cd = self:GetSpellCooldown(self.icons.spells.swd.id)
         if cd == 0 then
             return ''
         end
-        return sformat(icd > 2 and "%d" or "%.1f", cd)
+        return sformat(icd > 1 and "%d" or "%.1f", cd)
     end
 end
 
@@ -1082,7 +1077,7 @@ function XerrPrio:AddRefreshBar(frame, refreshPower, color, uvls, duration, perc
         if XerrPrio.lowestProcTime > 0 then
 
             if uvls then
-                color = { r = 1, g = 0.843, b = 0, a = 1 } -- gold
+                color = self.colors.gold -- gold
             else
                 if stats.uvls or (XerrPrio.lowestProcTime <= 0.3 and spellId == self.bars.spells.swp.id) or
                         (XerrPrio.lowestProcTime <= 0.3 + vtCastTime and spellId == self.bars.spells.vt.id) then
