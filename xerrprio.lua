@@ -382,6 +382,7 @@ XerrPrio.Worker:SetScript("OnUpdate", function(self, elapsed)
                     self.show = true
 
                     _G[frame .. 'Bar']:SetWidth(XerrPrioDB.barWidth * perc)
+                    _G[frame .. 'Bar']:SetTexCoord(0, perc, 0, 1)
                     _G[frame .. 'TextsTimeLeft']:SetText(floor(tl))
                     _G[frame .. 'RefreshBar']:SetVertexColor(1, 1, 1, 0.2)
 
@@ -410,6 +411,16 @@ XerrPrio.Worker:SetScript("OnUpdate", function(self, elapsed)
                     _G[frame]:Show()
                 end
 
+                -- reset dot stats if dot faded
+                if tl == 0 and XerrPrio.dotStats[guid] and XerrPrio.dotStats[guid][key] then
+                    XerrPrio.dotStats[guid][key] = nil
+                end
+
+            end
+
+            -- reset stats if both dots faded
+            if XerrPrio.dotStats[guid] and not XerrPrio.dotStats[guid].swp and not XerrPrio.dotStats[guid].vt then
+                XerrPrio.dotStats[guid] = nil
             end
 
             if self.show then
@@ -495,13 +506,16 @@ XerrPrio.OptionsAnim:SetScript("OnUpdate", function(self, elapsed)
 
                 if self.tl == self.duration then
                     _G[frame .. 'RefreshBar']:SetWidth(XerrPrioDB.barWidth * (XerrPrioDB.refreshMinDuration / self.duration))
+                    _G[frame .. 'RefreshBar']:SetTexCoord(0, XerrPrioDB.refreshMinDuration / self.duration, 0, 1)
                 end
 
                 _G[frame .. 'Bar']:SetWidth(XerrPrioDB.barWidth * (self.tl / self.duration))
+                _G[frame .. 'Bar']:SetTexCoord(0, self.tl / self.duration, 0, 1)
                 _G[frame .. 'TextsTimeLeft']:SetText(floor(self.tl))
 
                 if _G[frame .. 'RefreshBar']:GetWidth() > _G[frame .. 'Bar']:GetWidth() then
                     _G[frame .. 'RefreshBar']:SetWidth(_G[frame .. 'Bar']:GetWidth())
+                    _G[frame .. 'RefreshBar']:SetTexCoord(0, _G[frame .. 'Bar']:GetWidth() / XerrPrioDB.barWidth, 0, 1)
                 end
 
                 if spell.id == XerrPrio.bars.spells.vt.id then
@@ -738,11 +752,13 @@ function XerrPrio:GetNextSpell(guid, uvls, uvlsDuration, vtCastTime)
         elseif self.dotStats[guid] and self.dotStats[guid].swp and not self.dotStats[guid].swp.uvls then
             tinsert(prio, self.icons.spells.swp)
         else
-            -- vt and swp if it doesnt exist
-            if uvlsDuration >= vtCastTime + 0.2 then
+            -- vt and swp if it doesnt exist or duration under 10
+            if self:GetDebuffInfo(self.icons.spells.vt.id) == 0 then
                 tinsert(prio, self.icons.spells.vt)
             end
-            tinsert(prio, self.icons.spells.swp)
+            if self:GetDebuffInfo(self.icons.spells.swp.id) == 0 then
+                tinsert(prio, self.icons.spells.swp)
+            end
         end
     end
 
@@ -1092,9 +1108,12 @@ function XerrPrio:AddRefreshBar(frame, refreshPower, color, uvls, duration, perc
 
             if XerrPrioDB.barWidth * (XerrPrio.lowestProcTime / duration) > XerrPrioDB.barWidth * perc then
                 _G[frame .. 'RefreshBar']:SetWidth(XerrPrioDB.barWidth * perc)
+                _G[frame .. 'RefreshBar']:SetTexCoord(0, perc, 0, 1)
             else
                 _G[frame .. 'RefreshBar']:SetWidth(XerrPrioDB.barWidth * (XerrPrio.lowestProcTime / duration))
+                _G[frame .. 'RefreshBar']:SetTexCoord(0, XerrPrio.lowestProcTime / duration, 0, 1)
             end
+            _G[frame .. 'RefreshSpark']:SetVertexColor(color.r, color.g, color.b, 1)
             _G[frame .. 'RefreshSpark']:Show()
             _G[frame .. 'RefreshBar']:Show()
 
@@ -1114,6 +1133,7 @@ function XerrPrio:AddRefreshBar(frame, refreshPower, color, uvls, duration, perc
     if tl <= stats.interval and not stats.uvls then
         _G[frame .. 'RefreshBar']:SetVertexColor(color.r, color.g, color.b, color.a)
         _G[frame .. 'RefreshBar']:SetWidth(XerrPrioDB.barWidth * (tl / duration))
+        _G[frame .. 'RefreshBar']:SetTexCoord(0, tl / duration, 0, 1)
         _G[frame .. 'RefreshSpark']:Show()
         _G[frame .. 'RefreshBar']:Show()
     end
@@ -1171,6 +1191,8 @@ function XerrPrio:AddDotTicks(frame, spell, key, stats, tl, vtCastTime, duration
             else
                 _G[spell.castTimeTick:GetName() .. 'Tick']:SetVertexColor(0, 0, 0, 0.5)
             end
+
+            _G[spell.castTimeTick:GetName() .. 'Tick']:Show()
 
         end
     end
@@ -1868,11 +1890,16 @@ function XerrPrio:UpdateConfig()
         local refreshBarColor = XerrPrioDB[key].refreshBarColor
 
         _G[frame .. 'RefreshBar']:SetWidth(XerrPrioDB.barWidth * (XerrPrioDB.refreshMinDuration / XerrPrio.OptionsAnim.duration))
+        _G[frame .. 'RefreshBar']:SetTexCoord(0, XerrPrioDB.refreshMinDuration / XerrPrio.OptionsAnim.duration, 0, 1)
         _G[frame .. 'RefreshBar']:SetVertexColor(refreshBarColor.r, refreshBarColor.g, refreshBarColor.b, refreshBarColor.a)
         _G[frame .. 'RefreshBar']:Show()
         _G[frame .. 'RefreshSpark']:Show()
 
+        _G[frame .. 'BarLightning']:Hide()
+
         _G[frame .. 'Bar']:SetVertexColor(barColor.r, barColor.g, barColor.b, barColor.a)
+        _G[frame .. 'Spark']:SetVertexColor(barColor.r, barColor.g, barColor.b, 1)
+        _G[frame .. 'RefreshSpark']:SetVertexColor(refreshBarColor.r, refreshBarColor.g, refreshBarColor.b, 1)
 
         _G[frame .. 'TextsName']:SetTextColor(textColor.r, textColor.g, textColor.b, textColor.a)
 

@@ -11,8 +11,9 @@
         </Size>
         <Layers>
             <Layer level="BORDER">
-                <Texture file="Interface\Addons\xerrprio\Melli" name="$parentTick">
+                <Texture file="Interface\Addons\xerrprio\textures\bar" name="$parentTick">
                     <Size x="1" y="24"/>
+                    <TexCoords top="0" bottom="1" left="0.9" right="1"/>
                     <Anchors>
                         <Anchor point="TOPLEFT">
                             <Offset>
@@ -43,7 +44,7 @@
                 </Texture>
             </Layer>
             <Layer level="BORDER">
-                <Texture file="Interface\Addons\xerrprio\Melli" name="$parentBar">
+                <Texture file="Interface\Addons\xerrprio\textures\bar" name="$parentBar">
                     <Size x="260" y="24"/>
                     <Anchors>
                         <Anchor point="TOPLEFT">
@@ -55,7 +56,7 @@
                 </Texture>
             </Layer>
             <Layer level="ARTWORK">
-                <Texture file="Interface\Addons\xerrprio\Melli-lightning" name="$parentBarLightning" alphaMode="ADD">
+                <Texture file="Interface\Addons\xerrprio\textures\lightning" name="$parentBarLightning" alphaMode="ADD">
                     <Size x="260" y="24"/>
                     <Anchors>
                         <Anchor point="TOPLEFT">
@@ -65,23 +66,12 @@
                         </Anchor>
                     </Anchors>
                 </Texture>
-                <Texture file="Interface\Addons\xerrprio\Melli" name="$parentRefreshBar">
+                <Texture file="Interface\Addons\xerrprio\textures\bar" name="$parentRefreshBar">
                     <Size x="260" y="24"/>
                     <Anchors>
                         <Anchor point="TOPLEFT">
                             <Offset>
                                 <AbsDimension x="0" y="0"/>
-                            </Offset>
-                        </Anchor>
-                    </Anchors>
-                </Texture>
-                <Texture file="Interface\CastingBar\UI-CastingBar-Spark" name="$parentRefreshSpark"
-                         alphaMode="ADD">
-                    <Size x="16" y="32"/>
-                    <Anchors>
-                        <Anchor point="LEFT" relativeTo="$parentRefreshBar" relativePoint="RIGHT">
-                            <Offset>
-                                <AbsDimension x="-8" y="0"/>
                             </Offset>
                         </Anchor>
                     </Anchors>
@@ -97,10 +87,22 @@
                         </Anchor>
                     </Anchors>
                 </Texture>
-                <Texture file="Interface\CastingBar\UI-CastingBar-Spark" name="$parentSpark" alphaMode="ADD">
-                    <Size x="16" y="32"/>
+                <Texture file="Interface\AddOns\xerrprio\textures\spark" name="$parentSpark" >
+                    <Size x="16" y="38"/>
                     <Anchors>
                         <Anchor point="LEFT" relativeTo="$parentBar" relativePoint="RIGHT">
+                            <Offset>
+                                <AbsDimension x="-8" y="0"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </Texture>
+            </Layer>
+            <Layer leve="OVERLAY">
+                <Texture file="Interface\Addons\xerrprio\textures\spark" name="$parentRefreshSpark" >
+                    <Size x="16" y="38"/>
+                    <Anchors>
+                        <Anchor point="LEFT" relativeTo="$parentRefreshBar" relativePoint="RIGHT">
                             <Offset>
                                 <AbsDimension x="-8" y="0"/>
                             </Offset>
@@ -168,7 +170,7 @@
                 </Anchors>
                 <Layers>
                     <Layer level="OVERLAY">
-                        <Texture name="$parentDown1" file="Interface\AddOns\xerrprio\up" hidden="true">
+                        <Texture name="$parentDown1" file="Interface\AddOns\xerrprio\textures\up" hidden="true">
                             <Size x="14" y="14"/>
                             <TexCoords left="0" right="1" top="1" bottom="0"/>
                             <Color r="1" g="0.1" b="0.1" a="0.5"/>
@@ -180,7 +182,7 @@
                                 </Anchor>
                             </Anchors>
                         </Texture>
-                        <Texture name="$parentDown2" file="Interface\AddOns\xerrprio\up" hidden="true">
+                        <Texture name="$parentDown2" file="Interface\AddOns\xerrprio\textures\up" hidden="true">
                             <Size x="14" y="14"/>
                             <TexCoords left="0" right="1" top="1" bottom="0"/>
                             <Color r="1" g="0.1" b="0.1" a="0.75"/>
@@ -192,7 +194,7 @@
                                 </Anchor>
                             </Anchors>
                         </Texture>
-                        <Texture name="$parentDown3" file="Interface\AddOns\xerrprio\up" hidden="true">
+                        <Texture name="$parentDown3" file="Interface\AddOns\xerrprio\textures\up" hidden="true">
                             <Size x="14" y="14"/>
                             <TexCoords left="0" right="1" top="1" bottom="0"/>
                             <Color r="1" g="0.1" b="0.1" a="1"/>
@@ -204,7 +206,7 @@
                                 </Anchor>
                             </Anchors>
                         </Texture>
-                        <Texture name="$parentUp1" file="Interface\AddOns\xerrprio\up">
+                        <Texture name="$parentUp1" file="Interface\AddOns\xerrprio\textures\up">
                             <Size x="14" y="14"/>
                             <Color r="0.1" g="1" b="0.1" a="0.5"/>
                             <Anchors>
@@ -215,7 +217,7 @@
                                 </Anchor>
                             </Anchors>
                         </Texture>
-                        <Texture name="$parentUp2" file="Interface\AddOns\xerrprio\up">
+                        <Texture name="$parentUp2" file="Interface\AddOns\xerrprio\textures\up">
                             <Size x="14" y="14"/>
                             <Color r="0.1" g="1" b="0.1" a="0.75"/>
                             <Anchors>
@@ -226,7 +228,7 @@
                                 </Anchor>
                             </Anchors>
                         </Texture>
-                        <Texture name="$parentUp3" file="Interface\AddOns\xerrprio\up">
+                        <Texture name="$parentUp3" file="Interface\AddOns\xerrprio\textures\up">
                             <Size x="14" y="14"/>
                             <Color r="0.1" g="1" b="0.1" a="1"/>
                             <Anchors>
